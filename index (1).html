@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playbook Quick Search</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column a rep can glance at. Role first, cue buttons, one answer card, search below. */
+:root {
+  --bg: #F1F5F1;
+  --surface: #FFFFFF;
+  --ink: #15241C;
+  --muted: #5A6B60;
+  --line: #D3DCD5;
+  --accent: #0B6E4F;
+  --accent-ink: #FFFFFF;
+  --say-bg: #E2F1E9;
+  --warn-bg: #FBEFD6;
+  --warn-ink: #6B4A07;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1612; --surface: #18221C; --ink: #E6EEE8; --muted: #9AA99F; --line: #2B3930;
+    --accent: #5FCB9B; --accent-ink: #0B1A13; --say-bg: #1B3026; --warn-bg: #33290F; --warn-ink: #F0D28A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1612; --surface: #18221C; --ink: #E6EEE8; --muted: #9AA99F; --line: #2B3930;
+  --accent: #5FCB9B; --accent-ink: #0B1A13; --say-bg: #1B3026; --warn-bg: #33290F; --warn-ink: #F0D28A;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.5;
+  padding-inline: 16px; padding-block: 20px 40px;
+}
+.wrap { max-width: 680px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+h1 { font-family: var(--display); font-size: 1.7rem; line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+.tag { font-family: var(--mono); font-size: 0.72rem; background: var(--warn-bg); color: var(--warn-ink); padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+.sub { margin: 0; color: var(--muted); font-size: 0.92rem; flex-basis: 100%; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+.label + .cues + .label { margin-top: 16px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.roles { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.roles button { border: 0; background: transparent; padding: 8px 14px; font-weight: 500; font-size: 0.9rem; border-right: 1px solid var(--line); }
+.roles button:last-child { border-right: 0; }
+.roles button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+.cues { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 480px) { .cues { grid-template-columns: repeat(2, 1fr); } }
+.cues button {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 10px; text-align: left; font-weight: 600; font-size: 0.95rem; line-height: 1.2; min-width: 0;
+}
+.cues button small { display: block; font-weight: 400; color: var(--muted); font-size: 0.78rem; margin-top: 3px; }
+.cues button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+.answer { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.answer .head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.answer h2 { font-family: var(--display); font-size: 1.15rem; margin: 0; text-wrap: balance; }
+.lead { background: var(--say-bg); border-radius: 8px; padding: 12px 16px 14px; }
+.lead .k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; }
+.lead p { font-size: 1.1rem; line-height: 1.4; font-weight: 500; margin: 2px 0 0; }
+.row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: start; }
+@media (max-width: 480px) { .row { grid-template-columns: 1fr; gap: 2px; } }
+.row .k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; padding-top: 3px; }
+.row .v { margin: 0; min-width: 0; }
+.row ul, .row ol { margin: 0; padding-left: 18px; }
+.src { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between; }
+.miss { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 14px 16px; margin: 0; }
+.related { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.related span { font-size: 0.82rem; color: var(--muted); }
+
+.ask form { display: flex; gap: 8px; }
+.ask input { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; }
+.ask form button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 0 18px; font-weight: 600; }
+.tries { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.82rem; color: var(--muted); text-align: left; }
+.asked { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.asked b { color: var(--ink); font-weight: 500; }
+footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 14px; }
+footer p { margin: 0 0 6px; max-width: 65ch; }
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Playbook Quick Search</h1>
+    <span class="tag">PROTOTYPE</span>
+    <p class="sub">Pick your role, then tap a situation or search. Every answer comes straight from the sales playbook.</p>
+  </header>
+
+  <section>
+    <p class="label">I work in</p>
+    <div class="roles" id="roles" role="group" aria-label="Sales role">
+      <button type="button" id="role-inside" data-role="inside">Inside sales</button>
+      <button type="button" id="role-outside" data-role="outside">Outside sales</button>
+      <button type="button" id="role-counter" data-role="counter">Counter sales</button>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Customer raised</p>
+    <div class="cues">
+      <button type="button" id="cue-price" data-id="price">Price<small>"They're cheaper"</small></button>
+      <button type="button" id="cue-service" data-id="service">Past service<small>"You burned me before"</small></button>
+      <button type="button" id="cue-availability" data-id="availability">Availability<small>Stock, pickup, delivery</small></button>
+    </div>
+    <p class="label">I need to</p>
+    <div class="cues">
+      <button type="button" id="cue-questions" data-id="questions">Ask good questions<small>For my role</small></button>
+      <button type="button" id="cue-handoff" data-id="handoff">Hand off a customer<small>5 step checklist</small></button>
+      <button type="button" id="cue-opener" data-id="opener">Open a cold call<small>Section 4 not written yet</small></button>
+    </div>
+  </section>
+
+  <section class="answer" id="answer" aria-live="polite"></section>
+
+  <section class="ask">
+    <p class="label">Search the playbook</p>
+    <form id="ask-form">
+      <input id="ask-input" type="text" autocomplete="off" placeholder="Try: the other supplier is cheaper" aria-label="Search the playbook">
+      <button type="submit" id="ask-send">Search</button>
+    </form>
+    <div class="tries" id="tries">
+      <button type="button" class="chip" id="try-1">Customer has a technical question I can't answer</button>
+      <button type="button" class="chip" id="try-2">A walk-in mentions a big project coming up</button>
+      <button type="button" class="chip" id="try-3">What's our return policy?</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>Capstone Group 1 prototype. Wording comes from Sales Playbook draft V1, sections 1 and 2, which is still awaiting sponsor review. Anything marked Placeholder covers a section that is not written yet.</p>
+    <p>Search matches key words and phrases to playbook topics. It does not use AI, and it never shows anything that isn't in the playbook.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var ROLE_NAMES = { inside: "Inside sales", outside: "Outside sales", counter: "Counter sales" };
+  var SEC = {
+    inside: "Section 2.2 · Inside Sales · p. 5",
+    outside: "Section 2.3 · Outside Sales · p. 6",
+    counter: "Section 2.4 · Counter Sales · p. 7"
+  };
+  var S25 = "Section 2.5 · Coordination and Manager Support · p. 8";
+  var S21 = "Section 2.1 · Role Comparison · p. 4";
+
+  /* ------------------------------------------------------------------
+     PLAYBOOK CARDS. One entry per topic.
+     keys   = words and phrases a rep might type. Longer phrases win.
+     byRole = a different card per role.  body = one card for everyone.
+     To add a topic, copy an entry, change the text, and add its keys.
+     ------------------------------------------------------------------ */
+  var CARDS = {
+    price: {
+      title: "Price concern",
+      keys: ["price", "pricing", "cheaper", "cheap", "expensive", "discount", "cost", "competitor", "competing", "too high", "too much", "lower", "price match", "beat", "shopping around", "better deal", "other supplier", "other guy", "markup", "%"],
+      byRole: {
+        inside: { leadLabel: "Do this", lead: "Ask which item, quantity, or competing offer the customer is comparing.", rows: [["Then", "Confirm an equivalent scope before explaining relevant value or requesting an authorized review."]] },
+        outside: { leadLabel: "Do this", lead: "Confirm feasibility before promising pricing, stock, or delivery.", rows: [["Then", "Pricing requests go to a manager, who reviews them within their authority."]], src: "Sections 2.3 and 2.5 · pp. 6, 8" },
+        counter: { leadLabel: "Do this", lead: "Clarify the comparison and explain relevant product or service value.", rows: [["Remember", "The immediate solution is not to lower the price."]] }
+      }
+    },
+    service: {
+      title: "Past service problem",
+      keys: ["service", "complain", "complaint", "was late", "came late", "arrived late", "late delivery", "wrong", "mistake", "messed", "screwed", "burned", "bad experience", "last order", "last time", "upset", "angry", "mad", "frustrated", "never showed", "problem with", "issue with", "let down"],
+      byRole: {
+        inside: { leadLabel: "Do this", lead: "Capture what happened, its impact, and the resolution the customer expects.", rows: [["Then", "Document the concern and track the follow-up."]] },
+        outside: { leadLabel: "Do this", lead: "Follow through on the concern and coordinate the recovery.", rows: [["Then", "Confirm whether the resolution restored the customer's confidence."]] },
+        counter: { leadLabel: "Do this", lead: "Listen, document the facts, and connect the customer with the employee authorized to resolve it.", rows: [["Then", "Alert the responsible lead."]] }
+      }
+    },
+    availability: {
+      title: "Availability and convenience",
+      keys: ["far", "location", "drive", "stock", "availab", "unavailab", "out of stock", "sold out", "backorder", "back order", "closer", "convenien", "carry", "pickup", "pick up", "will call", "delivery", "deliver", "don't have it", "dont have it"],
+      byRole: {
+        inside: { leadLabel: "Do this", lead: "Verify availability and pickup or delivery options before making a convenience promise.", rows: [["Ask", "“When will you need these materials?”"]] },
+        outside: { leadLabel: "Do this", lead: "Confirm feasibility with the branch before promising pricing, stock, or delivery.", rows: [["Ask", "“Where are material delays or product issues affecting your crews?”"]] },
+        counter: { leadLabel: "Do this", lead: "Confirm the customer's deadline and investigate feasible options before making a promise.", rows: [["Ask", "“When do you need the material?”"], ["Then", "Check stock and coordinate alternatives, transfers, or fulfillment options through approved procedures."]] }
+      }
+    },
+    questions: {
+      title: "Questions that guide the conversation",
+      keys: ["question", "discover", "qualify", "find out", "what to ask", "what do i ask", "what should i ask", "what do i say", "start a conversation", "conversation", "get to know"],
+      byRole: {
+        inside: { leadLabel: "Say", lead: "“Where do you currently purchase your supplies?”", rows: [["Then ask", ["“What projects are you working on right now?”", "“What works well with your current supplier, and what would you improve?”", "“When will you need these materials?”"]]] },
+        outside: { leadLabel: "Say", lead: "“What projects are coming up over the next few months?”", rows: [["Then ask", ["“Where are material delays or product issues affecting your crews?”", "“Which supplies do you purchase elsewhere, and why?”", "“What would make Ewing easier to do business with?”"]]] },
+        counter: { leadLabel: "Say", lead: "“What are you working on today?”", rows: [["Then ask", ["“What product or system does this need to work with?”", "“When do you need the material?”", "“Do you have the related fittings or supplies needed to finish the job?”"]]] }
+      }
+    },
+    handoff: {
+      title: "A consistent handoff",
+      keys: ["handoff", "hand off", "hand over", "pass along", "pass it", "pass the customer", "transfer the customer", "route", "send to", "refer", "loop in", "who do i send"],
+      body: {
+        leadLabel: "Rule",
+        lead: "Keep ownership until the receiving employee accepts the handoff.",
+        rows: [["Steps", { ordered: ["Record the customer and preferred contact method.", "Summarize the project, required items, quantities, and deadline.", "Document the objection or service issue and any verified commitments.", "Name the receiving employee, the next action, and its due date.", "Confirm acceptance and update the customer when the action is complete."] }]],
+        src: S25
+      }
+    },
+    opener: {
+      title: "Cold call opener",
+      placeholder: true,
+      keys: ["cold call", "cold-call", "opener", "intro", "introduce", "first call", "start the call", "prospect", "voicemail", "outreach", "calling a new"],
+      byRole: {
+        inside: { leadLabel: "Say", lead: "Hi, this is [you] with Ewing in [branch]. I work with contractors in [area] and have two quick questions. Got a minute?", rows: [["Then ask", ["“Where do you currently purchase your supplies?”", "“What projects are you working on right now?”"]]] },
+        outside: { leadLabel: "Say", lead: "Hi [name], it's [you] with Ewing. I'm out near [job area] this week and wanted to hear what you have coming up.", rows: [["Then ask", "“What projects are coming up over the next few months?”"]] },
+        counter: { leadLabel: "Say", lead: "Hey [name], it's [you] at the [branch] counter. Haven't seen you in a few weeks and wanted to check in.", rows: [["Then ask", "“What are you working on today?”"]] }
+      },
+      src: "Section 4 · Cold Calling and Prospecting · planned"
+    },
+    technical: {
+      title: "Technical question",
+      keys: ["technical", "tech question", "compatib", "spec", "can't answer", "cant answer", "don't know", "dont know", "not sure", "performance", "will this work", "which product", "sizing", "install"],
+      byRole: {
+        inside: { leadLabel: "Do this", lead: "Collect the details and route the question to outside sales.", rows: [], src: S21 },
+        outside: { leadLabel: "Do this", lead: "Collect project details and consult a qualified specialist rather than guessing at compatibility or performance.", rows: [] },
+        counter: { leadLabel: "Do this", lead: "Explain familiar product information and involve a qualified employee when the question exceeds what you know.", rows: [] }
+      }
+    },
+    upsell: {
+      title: "Upselling and cross selling",
+      keys: ["upsell", "up-sell", "up sell", "cross sell", "cross-sell", "add on", "add-on", "related item", "upgrade", "complementary", "bigger order", "increase the order"],
+      byRole: {
+        inside: { leadLabel: "Do this", lead: "Qualify the prospect and follow up the quote. Outside sales leads relevant upselling and cross selling.", rows: [], src: S21 },
+        outside: { leadLabel: "Do this", lead: "Connect a product upgrade to a stated need, such as a required feature or application.", rows: [["Cross sell", "Identify complementary items the project requires."], ["Avoid", "Recommending additions solely to increase the order."]] },
+        counter: { leadLabel: "Do this", lead: "Identify relevant related items that help the customer complete the job.", rows: [["Ask", "“Do you have the related fittings or supplies needed to finish the job?”"]] }
+      }
+    },
+    project: {
+      title: "Customer mentions a bigger project",
+      keys: ["walk-in", "walk in", "walkin", "mentions a project", "upcoming project", "big project", "new project", "project coming", "larger project", "large project", "lead"],
+      byRole: {
+        inside: { leadLabel: "Do this", lead: "Confirm quantities and timing, and coordinate a quote.", rows: [["Then", ["The branch verifies fulfillment options before any delivery commitment is made.", "The assigned opportunity owner follows up with the customer."]]], src: S25 },
+        outside: { leadLabel: "Do this", lead: "Discuss the broader project and relevant complementary products.", rows: [["Then", ["The branch verifies fulfillment options before any delivery commitment is made.", "The assigned opportunity owner follows up with the customer."]]], src: S25 },
+        counter: { leadLabel: "Do this", lead: "Handle the immediate purchase and record the project need.", rows: [["Then", ["Send larger project opportunities to the assigned account lead, with the customer's permission to follow up.", "The branch verifies fulfillment options before any delivery commitment is made."]]], src: "Sections 2.4 and 2.5 · pp. 7, 8" }
+      }
+    },
+    owner: {
+      title: "One customer and a clear owner",
+      keys: ["who owns", "who handles", "owner", "responsible", "whose", "who should", "who follows up", "follow up", "follow-up", "my job or"],
+      body: {
+        leadLabel: "Rule",
+        lead: "The employee receiving a request owns the immediate response.",
+        rows: [["Also", ["The assigned account lead coordinates ongoing account development.", "For issues requiring approval, the authorized manager owns the decision.", "The customer should always know who will respond next and when."]]],
+        src: S25
+      }
+    },
+    manager: {
+      title: "When a manager decides",
+      keys: ["manager", "approval", "approve", "authority", "authorized", "escalate", "sign off", "permission"],
+      body: {
+        leadLabel: "Rule",
+        lead: "For issues requiring approval, the authorized manager owns the decision.",
+        rows: [["Managers", "Coach discovery, review pricing requests within their authority, coordinate service recovery, and remove barriers across roles."], ["Remember", "Don't make technical or commercial commitments beyond your assigned authority."]],
+        src: S25
+      }
+    },
+    role: {
+      title: "What my role does",
+      keys: ["my role", "my job", "what do i do", "role purpose", "responsibilit", "what is inside sales", "what is outside sales", "what is counter sales", "job description", "difference between"],
+      byRole: {
+        inside: { leadLabel: "Purpose", lead: "Develop opportunities through telephone, email, and other remote contact.", rows: [["Focus", "Turn inquiries and outreach into clearly understood customer needs, actionable quotes, and scheduled follow-up."], ["Find out", "Current supplier, active projects, buying needs."]] },
+        outside: { leadLabel: "Purpose", lead: "Develop customer relationships through field contact and account planning.", rows: [["Focus", "Understand the customer's business, identify relevant growth opportunities, and coordinate branch support to sustain repeat business."], ["Find out", "Project pipeline, account goals, unmet needs."]] },
+        counter: { leadLabel: "Purpose", lead: "Serve customers in person at the branch.", rows: [["Focus", "Combine efficient transaction handling with practical discovery, so customers leave with suitable products, accurate expectations, and a clear path for any unresolved need."], ["Find out", "Immediate task, required items, deadline."]] }
+      }
+    }
+  };
+
+  var state = { role: "inside", id: "price", question: "", related: [] };
+  try { var saved = localStorage.getItem("pqs-role"); if (saved && ROLE_NAMES[saved]) state.role = saved; } catch (e) {}
+
+  var answerEl = document.getElementById("answer");
+  var input = document.getElementById("ask-input");
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function list(tag, items) {
+    var l = el(tag, "v");
+    items.forEach(function (c) { l.appendChild(el("li", null, c)); });
+    return l;
+  }
+  function row(label, content) {
+    var r = el("div", "row");
+    r.appendChild(el("div", "k", label));
+    if (content && content.ordered) r.appendChild(list("ol", content.ordered));
+    else if (Array.isArray(content)) r.appendChild(content.length === 1 ? el("p", "v", content[0]) : list("ul", content));
+    else r.appendChild(el("p", "v", content));
+    return r;
+  }
+
+  function show(id) { state.id = id; state.question = ""; state.related = []; render(); }
+
+  function render() {
+    answerEl.textContent = "";
+    if (state.question) {
+      var q = el("p", "asked");
+      q.appendChild(document.createTextNode("You searched "));
+      q.appendChild(el("b", null, "“" + state.question + "”"));
+      answerEl.appendChild(q);
+    }
+    if (!state.id) {
+      answerEl.appendChild(el("h2", null, "Not in the playbook"));
+      answerEl.appendChild(el("p", "miss", "Nothing in the playbook matches that. Try different words, or ask your branch manager and flag the question so it gets added."));
+      var s0 = el("div", "src");
+      s0.appendChild(el("span", null, "Source · none found"));
+      answerEl.appendChild(s0);
+    } else {
+      var e = CARDS[state.id];
+      var body = e.byRole ? e.byRole[state.role] : e.body;
+      var head = el("div", "head");
+      head.appendChild(el("h2", null, e.title));
+      if (e.placeholder) head.appendChild(el("span", "tag", "PLACEHOLDER · not in V1"));
+      answerEl.appendChild(head);
+      var lead = el("div", "lead");
+      lead.appendChild(el("div", "k", body.leadLabel));
+      lead.appendChild(el("p", null, body.lead));
+      answerEl.appendChild(lead);
+      body.rows.forEach(function (r) { answerEl.appendChild(row(r[0], r[1])); });
+      var s = el("div", "src");
+      s.appendChild(el("span", null, "Source · " + (body.src || e.src || SEC[state.role])));
+      if (e.byRole) s.appendChild(el("span", null, "Role · " + ROLE_NAMES[state.role]));
+      answerEl.appendChild(s);
+    }
+    if (state.related.length) {
+      var rel = el("div", "related");
+      rel.appendChild(el("span", null, "Also related"));
+      state.related.forEach(function (id) {
+        var b = el("button", "chip", CARDS[id].title);
+        b.type = "button";
+        b.addEventListener("click", function () {
+          state.related = state.related.filter(function (x) { return x !== id; }).concat(state.id ? [state.id] : []);
+          state.id = id;
+          render();
+        });
+        rel.appendChild(b);
+      });
+      answerEl.appendChild(rel);
+    }
+    document.querySelectorAll(".cues button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(!state.question && b.dataset.id === state.id));
+    });
+    document.querySelectorAll("#roles button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.role === state.role));
+    });
+  }
+
+  /* Returns card ids ranked by how well the text matches their keys. */
+  function rank(text) {
+    var t = " " + text.toLowerCase().replace(/[‘’]/g, "'").replace(/[^a-z0-9%' -]+/g, " ").replace(/\s+/g, " ") + " ";
+    var scored = [];
+    Object.keys(CARDS).forEach(function (id) {
+      var score = 0;
+      CARDS[id].keys.forEach(function (k) {
+        var hit = /^[a-z0-9]/.test(k) ? t.indexOf(" " + k) !== -1 : t.indexOf(k) !== -1;
+        if (hit) score += k.length;
+      });
+      if (score > 0) scored.push([id, score]);
+    });
+    scored.sort(function (a, b) { return b[1] - a[1]; });
+    return scored.map(function (s) { return s[0]; });
+  }
+
+  function search(text) {
+    text = text.trim();
+    if (!text) return;
+    var ids = rank(text);
+    state.question = text;
+    state.id = ids[0] || null;
+    state.related = ids.slice(1, 4);
+    render();
+  }
+
+  document.querySelectorAll(".cues button").forEach(function (b) {
+    b.addEventListener("click", function () { show(b.dataset.id); });
+  });
+  document.querySelectorAll("#roles button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.role = b.dataset.role;
+      try { localStorage.setItem("pqs-role", state.role); } catch (e) {}
+      render();
+    });
+  });
+  document.getElementById("ask-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    search(input.value);
+  });
+  document.querySelectorAll("#tries button").forEach(function (b) {
+    b.addEventListener("click", function () { input.value = b.textContent; search(b.textContent); });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
