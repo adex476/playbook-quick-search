@@ -6,7 +6,7 @@
 <title>Playbook Quick Search</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: one narrow column a rep can glance at. Role first, cue buttons, one answer card, search below. */
+/* Layout: one narrow column a rep can glance at. Role first, six quick buttons, one answer card, search below. */
 :root {
   --bg: #F1F5F1;
   --surface: #FFFFFF;
@@ -36,17 +36,18 @@
 }
 * { box-sizing: border-box; }
 body {
+  margin: 0;
   background: var(--bg); color: var(--ink);
   font-family: var(--body); font-size: 16px; line-height: 1.5;
   padding-inline: 16px; padding-block: 20px 40px;
 }
+[hidden] { display: none !important; }
 .wrap { max-width: 680px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
 header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
 h1 { font-family: var(--display); font-size: 1.7rem; line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
 .tag { font-family: var(--mono); font-size: 0.72rem; background: var(--warn-bg); color: var(--warn-ink); padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
 .sub { margin: 0; color: var(--muted); font-size: 0.92rem; flex-basis: 100%; }
 .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
-.label + .cues + .label { margin-top: 16px; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -83,44 +84,39 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .ask form { display: flex; gap: 8px; }
 .ask input { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; }
 .ask form button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 0 18px; font-weight: 600; }
-.tries { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.82rem; color: var(--muted); text-align: left; }
 .asked { margin: 0; font-size: 0.9rem; color: var(--muted); }
 .asked b { color: var(--ink); font-weight: 500; }
 footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 14px; }
-footer p { margin: 0 0 6px; max-width: 65ch; }
+footer p { margin: 0; max-width: 65ch; }
 </style>
-<style>body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Playbook Quick Search</h1>
     <span class="tag">PROTOTYPE</span>
-    <p class="sub">Pick your role, then tap a situation or search. Every answer comes straight from the sales playbook.</p>
+    <p class="sub">Pick your role, then tap a situation or search. Every answer comes from the sales playbook.</p>
   </header>
 
   <section>
     <p class="label">I work in</p>
     <div class="roles" id="roles" role="group" aria-label="Sales role">
-      <button type="button" id="role-inside" data-role="inside">Inside sales</button>
-      <button type="button" id="role-outside" data-role="outside">Outside sales</button>
-      <button type="button" id="role-counter" data-role="counter">Counter sales</button>
+      <button type="button" data-role="inside">Inside sales</button>
+      <button type="button" data-role="outside">Outside sales</button>
+      <button type="button" data-role="counter">Counter sales</button>
     </div>
   </section>
 
   <section>
-    <p class="label">Customer raised</p>
+    <p class="label">Quick answers</p>
     <div class="cues">
-      <button type="button" id="cue-price" data-id="price">Price<small>"They're cheaper"</small></button>
-      <button type="button" id="cue-service" data-id="service">Past service<small>"You burned me before"</small></button>
-      <button type="button" id="cue-availability" data-id="availability">Availability<small>Stock, pickup, delivery</small></button>
-    </div>
-    <p class="label">I need to</p>
-    <div class="cues">
-      <button type="button" id="cue-questions" data-id="questions">Ask good questions<small>For my role</small></button>
-      <button type="button" id="cue-handoff" data-id="handoff">Hand off a customer<small>5 step checklist</small></button>
-      <button type="button" id="cue-opener" data-id="opener">Open a cold call<small>Section 4 not written yet</small></button>
+      <button type="button" data-id="opener">Open a cold call<small>Five step outline</small></button>
+      <button type="button" data-id="gotaguy">“I’ve got a guy”<small>Already has a supplier</small></button>
+      <button type="button" data-id="account">Open an account<small>The main ask</small></button>
+      <button type="button" data-id="price">Price objection<small>“They’re cheaper”</small></button>
+      <button type="button" data-id="hubspot">Log it in HubSpot<small>What to record</small></button>
+      <button type="button" data-id="handoff">Hand off a customer<small>5 step checklist</small></button>
     </div>
   </section>
 
@@ -129,19 +125,13 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
   <section class="ask">
     <p class="label">Search the playbook</p>
     <form id="ask-form">
-      <input id="ask-input" type="text" autocomplete="off" placeholder="Try: the other supplier is cheaper" aria-label="Search the playbook">
-      <button type="submit" id="ask-send">Search</button>
+      <input id="ask-input" type="text" autocomplete="off" placeholder="Try: they didn't pick up" aria-label="Search the playbook">
+      <button type="submit">Search</button>
     </form>
-    <div class="tries" id="tries">
-      <button type="button" class="chip" id="try-1">Customer has a technical question I can't answer</button>
-      <button type="button" class="chip" id="try-2">A walk-in mentions a big project coming up</button>
-      <button type="button" class="chip" id="try-3">What's our return policy?</button>
-    </div>
   </section>
 
   <footer>
-    <p>Capstone Group 1 prototype. Wording comes from Sales Playbook draft V1, sections 1 and 2, which is still awaiting sponsor review. Anything marked Placeholder covers a section that is not written yet.</p>
-    <p>Search matches key words and phrases to playbook topics. It does not use AI, and it never shows anything that isn't in the playbook.</p>
+    <p>Capstone Group 1 prototype. Answers come from Sales Playbook V1, sections 2 and 4. Keyword search only, no AI.</p>
   </footer>
 </div>
 
@@ -155,14 +145,132 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
   };
   var S25 = "Section 2.5 · Coordination and Manager Support · p. 8";
   var S21 = "Section 2.1 · Role Comparison · p. 4";
+  var S42 = "Section 4.2 · The Cold Call Outline";
+  var S44 = "Section 4.4 · Voicemail and Next Steps";
 
   /* ------------------------------------------------------------------
      PLAYBOOK CARDS. One entry per topic.
      keys   = words and phrases a rep might type. Longer phrases win.
      byRole = a different card per role.  body = one card for everyone.
      To add a topic, copy an entry, change the text, and add its keys.
+     Section 4 entries have no page numbers yet. Add them once the PDF is final.
      ------------------------------------------------------------------ */
   var CARDS = {
+    opener: {
+      title: "Cold call opener",
+      keys: ["cold call", "cold-call", "opener", "intro", "introduce", "first call", "start the call", "prospect", "outreach", "calling a new", "new contractor", "what do i say first"],
+      src: S42,
+      byRole: {
+        inside: {
+          leadLabel: "Say",
+          lead: "Hi [name], this is [you] with Ewing in [branch]. I saw your crew on the [site] job and wanted to reach out.",
+          rows: [
+            ["Reason", "Tie one fact from your prep to something Ewing can help with. Never lead with price."],
+            ["Pick one", ["Visible project → timing and stock", "Their trade → product fit", "Several suppliers → one stop shop", "Nothing found → one stop shop"]],
+            ["Ask", ["“What are you buying most right now?”", "“Who do you call when your main supplier runs out?”"]],
+            ["Close", "Ask to open an account. If they say no, fall back to a quote or a follow up date."]
+          ]
+        },
+        outside: {
+          leadLabel: "Say",
+          lead: "Hi, I’m [you] with Ewing in [branch]. I was nearby and saw your crew on this site. Who handles your material orders?",
+          rows: [
+            ["Keep it", "Under two minutes. Leave a card with your direct number."],
+            ["Ask", "“What projects are coming up over the next few months?”"],
+            ["Close", "Ask to open an account, or schedule an office visit."]
+          ]
+        },
+        counter: {
+          leadLabel: "Say",
+          lead: "Want me to set you up with an account? You’ll get order history and faster pickup next time.",
+          rows: [
+            ["When", "A walk-in mentions a project or comes back a second time."],
+            ["Then", "Open the account in the branch system and pass the contractor to the assigned owner under Section 2.5."]
+          ]
+        }
+      }
+    },
+    gotaguy: {
+      title: "They already have a supplier",
+      keys: ["got a guy", "have a guy", "my guy", "our guy", "we're good", "were good", "happy with", "not interested", "already have", "current supplier", "don't need", "dont need", "loyal", "switch"],
+      body: {
+        leadLabel: "Say",
+        lead: "Makes sense, and you don’t have to switch. Most of our customers kept their guy. An account with us just gives you a backup.",
+        rows: [
+          ["Do", "Agree first, then reframe Ewing as a backup."],
+          ["Don’t", "Knock their supplier or offer a discount."],
+          ["Then", "Ask to open an account."]
+        ],
+        src: S42
+      }
+    },
+    account: {
+      title: "Open an account",
+      keys: ["account", "open an account", "new account", "sign up", "signup", "set up", "setup", "credit app", "application", "charge account", "cash account", "form"],
+      src: S42,
+      byRole: {
+        inside: {
+          leadLabel: "Say",
+          lead: "Setting up an account takes about [X] minutes. Want me to send the form today?",
+          rows: [
+            ["If no", "“No problem. Can I quote your next order so you can compare?”"],
+            ["Then", "Log the call in HubSpot and set a follow up task with a date."]
+          ]
+        },
+        outside: {
+          leadLabel: "Say",
+          lead: "I can get your account started today so you’re set up before [project] ramps up. Who should I send the form to?",
+          rows: [
+            ["If no", "Schedule an office visit with a date."],
+            ["Then", "Log one note and the next step date in HubSpot the same day."]
+          ]
+        },
+        counter: {
+          leadLabel: "Say",
+          lead: "Want me to set you up with an account? You’ll get order history and faster pickup next time.",
+          rows: [
+            ["When", "A walk-in mentions a project or comes back a second time."],
+            ["Then", "Open the account in the branch system and pass the contractor to the assigned owner under Section 2.5."]
+          ]
+        }
+      }
+    },
+    hubspot: {
+      title: "Logging in HubSpot",
+      keys: ["hubspot", "hub spot", "crm", "log", "logging", "track", "tracking", "note", "task", "enter it", "where do i record", "record it"],
+      src: S44,
+      byRole: {
+        inside: {
+          leadLabel: "Do this",
+          lead: "Log every call, voicemail, and email in HubSpot.",
+          rows: [["When", "Right after the attempt."], ["Also", "Set a follow up task with a date."]]
+        },
+        outside: {
+          leadLabel: "Do this",
+          lead: "Log one note and the next step date in HubSpot.",
+          rows: [["When", "Same day as the visit."], ["Keep it", "Under a minute."]]
+        },
+        counter: {
+          leadLabel: "Do this",
+          lead: "Counter sales has no HubSpot access. Open the account in the branch system.",
+          rows: [["Then", "Pass the lead to the assigned owner under Section 2.5, same day."]]
+        }
+      }
+    },
+    voicemail: {
+      title: "Voicemail and follow up",
+      keys: ["voicemail", "voice mail", "no answer", "didn't answer", "didnt answer", "didn't pick up", "didnt pick up", "pick up", "unanswered", "no response", "not responding", "ghost", "how many times", "how many calls", "cadence", "follow up schedule", "when to stop", "give up"],
+      body: {
+        leadLabel: "Say",
+        lead: "Hi [name], this is [you] with Ewing in [branch]. I saw your crew on the [site] job and wanted to see if we could help with [product]. My direct number is [number]. Again, that’s [number]. I’ll also send a quick email.",
+        rows: [
+          ["Rules", ["Under 30 seconds.", "Say your number twice.", "One reason, no pitch."]],
+          ["Schedule", { ordered: ["Day 1. Call, voicemail, and a short email.", "Day 3. Call, no voicemail.", "Day 7. Call and a second voicemail.", "Day 14. Final email that leaves the door open."] }],
+          ["Then", "No reply after four tries? Stop and set a reminder for 60 to 90 days."]
+        ],
+        src: S44
+      }
+    },
     price: {
       title: "Price concern",
       keys: ["price", "pricing", "cheaper", "cheap", "expensive", "discount", "cost", "competitor", "competing", "too high", "too much", "lower", "price match", "beat", "shopping around", "better deal", "other supplier", "other guy", "markup", "%"],
@@ -170,6 +278,16 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
         inside: { leadLabel: "Do this", lead: "Ask which item, quantity, or competing offer the customer is comparing.", rows: [["Then", "Confirm an equivalent scope before explaining relevant value or requesting an authorized review."]] },
         outside: { leadLabel: "Do this", lead: "Confirm feasibility before promising pricing, stock, or delivery.", rows: [["Then", "Pricing requests go to a manager, who reviews them within their authority."]], src: "Sections 2.3 and 2.5 · pp. 6, 8" },
         counter: { leadLabel: "Do this", lead: "Clarify the comparison and explain relevant product or service value.", rows: [["Remember", "The immediate solution is not to lower the price."]] }
+      }
+    },
+    handoff: {
+      title: "A consistent handoff",
+      keys: ["handoff", "hand off", "hand over", "pass along", "pass it", "pass the customer", "transfer the customer", "route", "send to", "refer", "loop in", "who do i send"],
+      body: {
+        leadLabel: "Rule",
+        lead: "Keep ownership until the receiving employee accepts the handoff.",
+        rows: [["Steps", { ordered: ["Record the customer and preferred contact method.", "Summarize the project, required items, quantities, and deadline.", "Document the objection or service issue and any verified commitments.", "Name the receiving employee, the next action, and its due date.", "Confirm acceptance and update the customer when the action is complete."] }]],
+        src: S25
       }
     },
     service: {
@@ -183,7 +301,7 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
     },
     availability: {
       title: "Availability and convenience",
-      keys: ["far", "location", "drive", "stock", "availab", "unavailab", "out of stock", "sold out", "backorder", "back order", "closer", "convenien", "carry", "pickup", "pick up", "will call", "delivery", "deliver", "don't have it", "dont have it"],
+      keys: ["far", "location", "drive", "stock", "availab", "unavailab", "out of stock", "sold out", "backorder", "back order", "closer", "convenien", "carry", "will call", "delivery", "deliver", "don't have it", "dont have it"],
       byRole: {
         inside: { leadLabel: "Do this", lead: "Verify availability and pickup or delivery options before making a convenience promise.", rows: [["Ask", "“When will you need these materials?”"]] },
         outside: { leadLabel: "Do this", lead: "Confirm feasibility with the branch before promising pricing, stock, or delivery.", rows: [["Ask", "“Where are material delays or product issues affecting your crews?”"]] },
@@ -199,27 +317,6 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
         counter: { leadLabel: "Say", lead: "“What are you working on today?”", rows: [["Then ask", ["“What product or system does this need to work with?”", "“When do you need the material?”", "“Do you have the related fittings or supplies needed to finish the job?”"]]] }
       }
     },
-    handoff: {
-      title: "A consistent handoff",
-      keys: ["handoff", "hand off", "hand over", "pass along", "pass it", "pass the customer", "transfer the customer", "route", "send to", "refer", "loop in", "who do i send"],
-      body: {
-        leadLabel: "Rule",
-        lead: "Keep ownership until the receiving employee accepts the handoff.",
-        rows: [["Steps", { ordered: ["Record the customer and preferred contact method.", "Summarize the project, required items, quantities, and deadline.", "Document the objection or service issue and any verified commitments.", "Name the receiving employee, the next action, and its due date.", "Confirm acceptance and update the customer when the action is complete."] }]],
-        src: S25
-      }
-    },
-    opener: {
-      title: "Cold call opener",
-      placeholder: true,
-      keys: ["cold call", "cold-call", "opener", "intro", "introduce", "first call", "start the call", "prospect", "voicemail", "outreach", "calling a new"],
-      byRole: {
-        inside: { leadLabel: "Say", lead: "Hi, this is [you] with Ewing in [branch]. I work with contractors in [area] and have two quick questions. Got a minute?", rows: [["Then ask", ["“Where do you currently purchase your supplies?”", "“What projects are you working on right now?”"]]] },
-        outside: { leadLabel: "Say", lead: "Hi [name], it's [you] with Ewing. I'm out near [job area] this week and wanted to hear what you have coming up.", rows: [["Then ask", "“What projects are coming up over the next few months?”"]] },
-        counter: { leadLabel: "Say", lead: "Hey [name], it's [you] at the [branch] counter. Haven't seen you in a few weeks and wanted to check in.", rows: [["Then ask", "“What are you working on today?”"]] }
-      },
-      src: "Section 4 · Cold Calling and Prospecting · planned"
-    },
     technical: {
       title: "Technical question",
       keys: ["technical", "tech question", "compatib", "spec", "can't answer", "cant answer", "don't know", "dont know", "not sure", "performance", "will this work", "which product", "sizing", "install"],
@@ -231,7 +328,7 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
     },
     upsell: {
       title: "Upselling and cross selling",
-      keys: ["upsell", "up-sell", "up sell", "cross sell", "cross-sell", "add on", "add-on", "related item", "upgrade", "complementary", "bigger order", "increase the order"],
+      keys: ["upsell", "up-sell", "up sell", "cross sell", "cross-sell", "add on", "add-on", "related item", "upgrade", "complementary", "bigger order", "increase the order", "whole catalogue", "whole catalog", "one stop", "fuller basket"],
       byRole: {
         inside: { leadLabel: "Do this", lead: "Qualify the prospect and follow up the quote. Outside sales leads relevant upselling and cross selling.", rows: [], src: S21 },
         outside: { leadLabel: "Do this", lead: "Connect a product upgrade to a stated need, such as a required feature or application.", rows: [["Cross sell", "Identify complementary items the project requires."], ["Avoid", "Recommending additions solely to increase the order."]] },
@@ -244,7 +341,7 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
       byRole: {
         inside: { leadLabel: "Do this", lead: "Confirm quantities and timing, and coordinate a quote.", rows: [["Then", ["The branch verifies fulfillment options before any delivery commitment is made.", "The assigned opportunity owner follows up with the customer."]]], src: S25 },
         outside: { leadLabel: "Do this", lead: "Discuss the broader project and relevant complementary products.", rows: [["Then", ["The branch verifies fulfillment options before any delivery commitment is made.", "The assigned opportunity owner follows up with the customer."]]], src: S25 },
-        counter: { leadLabel: "Do this", lead: "Handle the immediate purchase and record the project need.", rows: [["Then", ["Send larger project opportunities to the assigned account lead, with the customer's permission to follow up.", "The branch verifies fulfillment options before any delivery commitment is made."]]], src: "Sections 2.4 and 2.5 · pp. 7, 8" }
+        counter: { leadLabel: "Do this", lead: "Handle the immediate purchase and record the project need.", rows: [["Also", "Offer to open an account if they don’t have one."], ["Then", ["Send larger project opportunities to the assigned account lead, with the customer's permission to follow up.", "The branch verifies fulfillment options before any delivery commitment is made."]]], src: "Sections 2.4, 2.5, and 4.2" }
       }
     },
     owner: {
@@ -278,7 +375,7 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
     }
   };
 
-  var state = { role: "inside", id: "price", question: "", related: [] };
+  var state = { role: "inside", id: "opener", question: "", related: [] };
   try { var saved = localStorage.getItem("pqs-role"); if (saved && ROLE_NAMES[saved]) state.role = saved; } catch (e) {}
 
   var answerEl = document.getElementById("answer");
@@ -325,7 +422,6 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
       var body = e.byRole ? e.byRole[state.role] : e.body;
       var head = el("div", "head");
       head.appendChild(el("h2", null, e.title));
-      if (e.placeholder) head.appendChild(el("span", "tag", "PLACEHOLDER · not in V1"));
       answerEl.appendChild(head);
       var lead = el("div", "lead");
       lead.appendChild(el("div", "k", body.leadLabel));
@@ -399,9 +495,6 @@ footer p { margin: 0 0 6px; max-width: 65ch; }
   document.getElementById("ask-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     search(input.value);
-  });
-  document.querySelectorAll("#tries button").forEach(function (b) {
-    b.addEventListener("click", function () { input.value = b.textContent; search(b.textContent); });
   });
 
   render();
